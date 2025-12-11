@@ -56,4 +56,4 @@ You can remove Trust Layer at any time from your browser’s extensions page. On
 ## Contact
 
 If you have questions about this policy or Trust Layer, contact:  
-`your-email@example.com`
+v6190340@gmail.com
