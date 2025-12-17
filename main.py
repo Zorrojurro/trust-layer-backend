@@ -11,11 +11,11 @@ from pydantic import BaseModel
 
 # --------- CONFIG ---------
 
-# Load .env for local development
+# Load .env for local development (Render will use env vars)
 load_dotenv()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")  # 4.1-mini by default
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")  # default
 
 if not OPENAI_API_KEY:
     raise RuntimeError("OPENAI_API_KEY is not set in environment or .env")
@@ -33,7 +33,7 @@ app.add_middleware(
 )
 
 
-# --------- Pydantic MODELS ---------
+# --------- MODELS ---------
 
 
 class RiskCategory(BaseModel):
@@ -48,8 +48,8 @@ class AnalyzeRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    overall_risk: str       # "low" | "medium" | "high"
-    overall_score: float    # 1–10, 1 bad, 10 good
+    overall_risk: str        # "low" | "medium" | "high"
+    overall_score: float     # 1–10, 1 bad, 10 good
     categories: list[RiskCategory]
     bullets: list[str]
     recommendation: str
@@ -77,7 +77,7 @@ def extract_visible_text(html: str) -> str:
     text = soup.get_text(separator="\n")
     lines = [line.strip() for line in text.splitlines()]
     cleaned = "\n".join(line for line in lines if line)
-    # Hard cap so we don't send insane tokens
+    # Hard cap to avoid insane token counts
     return cleaned[:12000]
 
 
@@ -154,10 +154,12 @@ Policy text:
 
 
 def call_llm(prompt: str) -> AnalyzeResponse:
-    # Use the Responses API so we can just read .output_text
+    # Deterministic: same input => stable output (as far as the model allows)
     resp = client.responses.create(
         model=OPENAI_MODEL,
         input=prompt,
+        temperature=0,  # no randomness
+        top_p=1,        # full distribution, no nucleus sampling noise
     )
 
     raw = resp.output_text
@@ -185,6 +187,7 @@ def call_llm(prompt: str) -> AnalyzeResponse:
                 )
             )
         except Exception:
+            # Skip malformed category entries instead of failing the whole request
             continue
 
     return AnalyzeResponse(
@@ -196,7 +199,12 @@ def call_llm(prompt: str) -> AnalyzeResponse:
     )
 
 
-# --------- ROUTE ---------
+# --------- ROUTES ---------
+
+
+@app.get("/")
+async def health():
+    return {"status": "ok", "service": "trust-layer-backend"}
 
 
 @app.post("/analyze-policy", response_model=AnalyzeResponse)
