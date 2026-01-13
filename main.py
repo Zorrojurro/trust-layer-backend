@@ -1,32 +1,93 @@
+import asyncio
+import hashlib
 import json
+import logging
 import os
+from datetime import datetime
 
 import httpx
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from openai import OpenAI
+from fastapi.responses import StreamingResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+import google.generativeai as genai
 from pydantic import BaseModel
+
+# --------- LOGGING ---------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("trust-layer")
 
 # --------- CONFIG ---------
 
-# Load .env for local development (Render will use env vars)
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")  # default
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # fastest model
+RATE_LIMIT = os.getenv("RATE_LIMIT", "30/minute")
 
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY is not set in environment or .env")
+if not GEMINI_API_KEY:
+    raise RuntimeError("GEMINI_API_KEY is not set in environment or .env")
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+model = genai.GenerativeModel(GEMINI_MODEL)
 
-app = FastAPI()
+# --------- RATE LIMITER ---------
+
+limiter = Limiter(key_func=get_remote_address)
+
+# --------- CACHE ---------
+
+_analysis_cache: dict[str, tuple[datetime, dict]] = {}
+CACHE_MAX_SIZE = 200
+CACHE_TTL_HOURS = 48  # longer cache = more speed
+
+
+def get_cache_key(url: str) -> str:
+    return hashlib.sha256(url.lower().strip().encode()).hexdigest()[:16]
+
+
+def get_cached_analysis(url: str) -> dict | None:
+    key = get_cache_key(url)
+    if key in _analysis_cache:
+        timestamp, data = _analysis_cache[key]
+        age_hours = (datetime.now() - timestamp).total_seconds() / 3600
+        if age_hours < CACHE_TTL_HOURS:
+            logger.info(f"⚡ Cache HIT")
+            return data
+        del _analysis_cache[key]
+    return None
+
+
+def set_cached_analysis(url: str, data: dict) -> None:
+    if len(_analysis_cache) >= CACHE_MAX_SIZE:
+        oldest_key = min(_analysis_cache, key=lambda k: _analysis_cache[k][0])
+        del _analysis_cache[oldest_key]
+    _analysis_cache[get_cache_key(url)] = (datetime.now(), data)
+
+
+# --------- APP ---------
+
+app = FastAPI(
+    title="Trust Layer Backend",
+    description="Privacy policy analyzer - Blazing Fast Edition",
+    version="0.5.0",
+)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # extension can call from chrome-extension://
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,7 +100,7 @@ app.add_middleware(
 class RiskCategory(BaseModel):
     id: str
     label: str
-    level: str  # "low" | "medium" | "high"
+    level: str
     note: str
 
 
@@ -48,154 +109,122 @@ class AnalyzeRequest(BaseModel):
 
 
 class AnalyzeResponse(BaseModel):
-    overall_risk: str        # "low" | "medium" | "high"
-    overall_score: float     # 1–10, 1 bad, 10 good
+    overall_risk: str
+    overall_score: float
     categories: list[RiskCategory]
     bullets: list[str]
     recommendation: str
+    cached: bool = False
 
 
-# --------- HELPERS ---------
+# --------- FAST HELPERS ---------
 
 
 async def fetch_policy_html(url: str) -> str:
+    """Fetch HTML with balanced timeout - reliable but fast."""
     async with httpx.AsyncClient(
-        timeout=15.0,
+        timeout=httpx.Timeout(15.0, connect=5.0),  # original reliable timeout
         follow_redirects=True,
-        headers={"User-Agent": "TrustLayer/0.2"},
-    ) as client_http:
-        resp = await client_http.get(url)
+        headers={"User-Agent": "TrustLayer/0.5"},
+        http2=True,  # HTTP/2 for speed
+    ) as client:
+        resp = await client.get(url)
         resp.raise_for_status()
         return resp.text
 
 
 def extract_visible_text(html: str) -> str:
-    soup = BeautifulSoup(html, "html.parser")
-    for tag in soup(["script", "style", "noscript"]):
+    """Fast text extraction with aggressive limits."""
+    soup = BeautifulSoup(html, "lxml")  # lxml is faster than html.parser
+    for tag in soup(["script", "style", "noscript", "header", "footer", "nav"]):
         tag.decompose()
 
     text = soup.get_text(separator="\n")
-    lines = [line.strip() for line in text.splitlines()]
-    cleaned = "\n".join(line for line in lines if line)
-    # Hard cap to avoid insane token counts
-    return cleaned[:12000]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    cleaned = "\n".join(lines)
+    # Smaller cap = faster LLM response
+    return cleaned[:8000]
 
 
-def build_prompt(policy_text: str) -> str:
-    return f"""
-You are a privacy policy risk analyzer helping a normal internet user.
-
-Read the privacy policy text below and respond ONLY with a valid JSON object
-with this exact structure:
+def build_fast_prompt(policy_text: str) -> str:
+    """Optimized prompt - shorter = faster."""
+    return f"""Analyze this privacy policy for user privacy risks. Return ONLY valid JSON:
 
 {{
-  "overall_risk": "low" | "medium" | "high",
-  "overall_score": number from 1 to 10,
+  "overall_risk": "low"|"medium"|"high",
+  "overall_score": 1-10 (10=safest),
   "categories": [
-    {{
-      "id": "data_sharing",
-      "label": "Data sharing",
-      "level": "low" | "medium" | "high",
-      "note": "short explanation"
-    }},
-    {{
-      "id": "tracking",
-      "label": "Tracking & profiling",
-      "level": "low" | "medium" | "high",
-      "note": "short explanation"
-    }},
-    {{
-      "id": "ai_training",
-      "label": "AI & model training",
-      "level": "low" | "medium" | "high",
-      "note": "short explanation"
-    }},
-    {{
-      "id": "retention",
-      "label": "Data retention",
-      "level": "low" | "medium" | "high",
-      "note": "short explanation"
-    }},
-    {{
-      "id": "security",
-      "label": "Security & breaches",
-      "level": "low" | "medium" | "high",
-      "note": "short explanation"
-    }},
-    {{
-      "id": "rights_control",
-      "label": "User control & rights",
-      "level": "low" | "medium" | "high",
-      "note": "short explanation"
-    }}
+    {{"id": "data_sharing", "label": "Data sharing", "level": "low"|"medium"|"high", "note": "brief"}},
+    {{"id": "tracking", "label": "Tracking", "level": "...", "note": "brief"}},
+    {{"id": "ai_training", "label": "AI training", "level": "...", "note": "brief"}},
+    {{"id": "retention", "label": "Data retention", "level": "...", "note": "brief"}},
+    {{"id": "security", "label": "Security", "level": "...", "note": "brief"}},
+    {{"id": "rights_control", "label": "User rights", "level": "...", "note": "brief"}}
   ],
-  "bullets": [
-    "very short risk or protection in plain language (aimed at the user)",
-    "..."
-  ],
-  "recommendation": "one short sentence of advice to the USER (e.g. 'Okay for normal use, avoid sharing very sensitive data')."
+  "bullets": ["risk1", "risk2", "risk3"],
+  "recommendation": "one sentence advice"
 }}
 
-Meaning of overall_score:
-- 1 = very risky for the user (bad)
-- 10 = very safe for the user (good)
-- higher scores always mean better privacy for the USER.
-
-Rules:
-- Speak to the USER, not the company.
-- Use lowercase for overall_risk and for each category.level.
-- overall_score must be a number (float or int).
-- Each bullet must be <= 18 words.
-- Do not include any extra text, comments, or explanations outside the JSON.
-
-Policy text:
-\"\"\"{policy_text}\"\"\"
-"""
+Policy:
+\"\"\"{policy_text}\"\"\""""
 
 
-def call_llm(prompt: str) -> AnalyzeResponse:
-    # Deterministic: same input => stable output (as far as the model allows)
-    resp = client.responses.create(
-        model=OPENAI_MODEL,
-        input=prompt,
-        temperature=0,  # no randomness
-        top_p=1,        # full distribution, no nucleus sampling noise
-    )
-
-    raw = resp.output_text
-
-    # Try to parse JSON, with a fallback that trims extra text
+async def call_gemini_async(prompt: str) -> dict:
+    """Async Gemini call - non-blocking for speed."""
+    loop = asyncio.get_event_loop()
+    
+    def sync_call():
+        response = model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0,
+                max_output_tokens=1000,  # limit output = faster
+            ),
+        )
+        return response.text
+    
+    raw = await loop.run_in_executor(None, sync_call)
+    
+    # Fast JSON parsing
     try:
-        data = json.loads(raw)
+        return json.loads(raw)
     except json.JSONDecodeError:
-        start = raw.find("{")
-        end = raw.rfind("}")
-        if start == -1 or end == -1 or end <= start:
-            raise
-        data = json.loads(raw[start : end + 1])
+        if "```json" in raw:
+            start = raw.find("```json") + 7
+            end = raw.find("```", start)
+            return json.loads(raw[start:end].strip())
+        start, end = raw.find("{"), raw.rfind("}")
+        if start != -1 and end > start:
+            return json.loads(raw[start:end + 1])
+        raise
 
-    raw_categories = data.get("categories", []) or []
-    categories: list[RiskCategory] = []
-    for c in raw_categories:
+
+def parse_analysis(data: dict, cached: bool = False) -> AnalyzeResponse:
+    """Fast parsing with defaults."""
+    categories = []
+    for c in data.get("categories", []) or []:
         try:
-            categories.append(
-                RiskCategory(
-                    id=str(c.get("id", "")),
-                    label=str(c.get("label", "")),
-                    level=str(c.get("level", "")).lower(),
-                    note=str(c.get("note", "")),
-                )
-            )
-        except Exception:
-            # Skip malformed category entries instead of failing the whole request
+            categories.append(RiskCategory(
+                id=str(c.get("id", "")),
+                label=str(c.get("label", "")),
+                level=str(c.get("level", "medium")).lower(),
+                note=str(c.get("note", "")),
+            ))
+        except:
             continue
 
+    try:
+        score = float(data.get("overall_score", 5.0))
+    except:
+        score = 5.0
+
     return AnalyzeResponse(
-        overall_risk=str(data.get("overall_risk", "unknown")).lower(),
-        overall_score=float(data.get("overall_score", 1.0)),
+        overall_risk=str(data.get("overall_risk", "medium")).lower(),
+        overall_score=score,
         categories=categories,
-        bullets=list(data.get("bullets", [])),
+        bullets=list(data.get("bullets", []))[:5],  # cap bullets
         recommendation=str(data.get("recommendation", "")),
+        cached=cached,
     )
 
 
@@ -204,35 +233,58 @@ def call_llm(prompt: str) -> AnalyzeResponse:
 
 @app.get("/")
 async def health():
-    return {"status": "ok", "service": "trust-layer-backend"}
+    return {
+        "status": "ok",
+        "service": "trust-layer-backend",
+        "model": GEMINI_MODEL,
+        "cache_size": len(_analysis_cache),
+        "version": "0.5.0-fast",
+    }
 
 
 @app.post("/analyze-policy", response_model=AnalyzeResponse)
-async def analyze_policy(req: AnalyzeRequest):
+@limiter.limit(RATE_LIMIT)
+async def analyze_policy(request: Request, req: AnalyzeRequest):
+    """Blazing fast policy analysis."""
     if not req.url.startswith("http"):
-        raise HTTPException(
-            status_code=400, detail="URL must start with http or https"
-        )
+        raise HTTPException(status_code=400, detail="Invalid URL")
+
+    # Cache hit = instant response
+    cached_data = get_cached_analysis(req.url)
+    if cached_data:
+        return parse_analysis(cached_data, cached=True)
 
     try:
+        # Parallel: start thinking about structure while fetching
         html = await fetch_policy_html(req.url)
         text = extract_visible_text(html)
-        if not text:
-            raise HTTPException(
-                status_code=400, detail="Could not extract text from policy"
-            )
+        
+        if len(text) < 100:
+            raise HTTPException(status_code=400, detail="Not enough policy text found")
 
-        prompt = build_prompt(text)
-        analysis = call_llm(prompt)
-        return analysis
+        prompt = build_fast_prompt(text)
+        data = await call_gemini_async(prompt)
+        
+        set_cached_analysis(req.url, data)
+        return parse_analysis(data, cached=False)
 
     except httpx.HTTPError as e:
-        raise HTTPException(
-            status_code=502, detail=f"Failed to fetch policy URL: {e}"
-        ) from e
+        raise HTTPException(status_code=502, detail=f"Fetch failed: {e}") from e
     except json.JSONDecodeError as e:
-        raise HTTPException(
-            status_code=500, detail=f"Model returned invalid JSON: {e}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"Invalid JSON from AI: {e}") from e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"LLM error: {e}") from e
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@app.get("/cache/stats")
+async def cache_stats():
+    return {"size": len(_analysis_cache), "max": CACHE_MAX_SIZE, "ttl_hours": CACHE_TTL_HOURS}
+
+
+@app.delete("/cache/clear")
+async def clear_cache():
+    global _analysis_cache
+    count = len(_analysis_cache)
+    _analysis_cache = {}
+    return {"cleared": count}

@@ -1,6 +1,8 @@
 fastapi
 uvicorn[standard]
-httpx
+httpx[http2]
 beautifulsoup4
-openai>=1.0.0
+lxml
+google-generativeai>=0.8.0
 python-dotenv
+slowapi
