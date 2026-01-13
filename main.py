@@ -10,11 +10,10 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import google.generativeai as genai
+from openai import OpenAI
 from pydantic import BaseModel
 
 # --------- LOGGING ---------
@@ -30,15 +29,14 @@ logger = logging.getLogger("trust-layer")
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")  # fastest model
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # fast & cheap
 RATE_LIMIT = os.getenv("RATE_LIMIT", "30/minute")
 
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY is not set in environment or .env")
+if not OPENAI_API_KEY:
+    raise RuntimeError("OPENAI_API_KEY is not set in environment or .env")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(GEMINI_MODEL)
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 # --------- RATE LIMITER ---------
 
@@ -48,7 +46,7 @@ limiter = Limiter(key_func=get_remote_address)
 
 _analysis_cache: dict[str, tuple[datetime, dict]] = {}
 CACHE_MAX_SIZE = 200
-CACHE_TTL_HOURS = 48  # longer cache = more speed
+CACHE_TTL_HOURS = 48
 
 
 def get_cache_key(url: str) -> str:
@@ -78,8 +76,8 @@ def set_cached_analysis(url: str, data: dict) -> None:
 
 app = FastAPI(
     title="Trust Layer Backend",
-    description="Privacy policy analyzer - Blazing Fast Edition",
-    version="0.5.0",
+    description="Privacy policy analyzer - OpenAI Edition",
+    version="0.6.0",
 )
 
 app.state.limiter = limiter
@@ -117,37 +115,36 @@ class AnalyzeResponse(BaseModel):
     cached: bool = False
 
 
-# --------- FAST HELPERS ---------
+# --------- HELPERS ---------
 
 
 async def fetch_policy_html(url: str) -> str:
-    """Fetch HTML with balanced timeout - reliable but fast."""
+    """Fetch HTML with reliable timeout."""
     async with httpx.AsyncClient(
-        timeout=httpx.Timeout(15.0, connect=5.0),  # original reliable timeout
+        timeout=httpx.Timeout(15.0, connect=5.0),
         follow_redirects=True,
-        headers={"User-Agent": "TrustLayer/0.5"},
-        http2=True,  # HTTP/2 for speed
-    ) as client:
-        resp = await client.get(url)
+        headers={"User-Agent": "TrustLayer/0.6"},
+        http2=True,
+    ) as http_client:
+        resp = await http_client.get(url)
         resp.raise_for_status()
         return resp.text
 
 
 def extract_visible_text(html: str) -> str:
-    """Fast text extraction with aggressive limits."""
-    soup = BeautifulSoup(html, "lxml")  # lxml is faster than html.parser
+    """Fast text extraction."""
+    soup = BeautifulSoup(html, "lxml")
     for tag in soup(["script", "style", "noscript", "header", "footer", "nav"]):
         tag.decompose()
 
     text = soup.get_text(separator="\n")
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     cleaned = "\n".join(lines)
-    # Smaller cap = faster LLM response
-    return cleaned[:8000]
+    return cleaned[:10000]
 
 
-def build_fast_prompt(policy_text: str) -> str:
-    """Optimized prompt - shorter = faster."""
+def build_prompt(policy_text: str) -> str:
+    """Optimized prompt for speed."""
     return f"""Analyze this privacy policy for user privacy risks. Return ONLY valid JSON:
 
 {{
@@ -169,23 +166,22 @@ Policy:
 \"\"\"{policy_text}\"\"\""""
 
 
-async def call_gemini_async(prompt: str) -> dict:
-    """Async Gemini call - non-blocking for speed."""
+async def call_openai_async(prompt: str) -> dict:
+    """Async OpenAI call - non-blocking."""
     loop = asyncio.get_event_loop()
     
     def sync_call():
-        response = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(
-                temperature=0,
-                max_output_tokens=1000,  # limit output = faster
-            ),
+        response = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            max_tokens=1000,
         )
-        return response.text
+        return response.choices[0].message.content
     
     raw = await loop.run_in_executor(None, sync_call)
     
-    # Fast JSON parsing
+    # Parse JSON
     try:
         return json.loads(raw)
     except json.JSONDecodeError:
@@ -200,7 +196,7 @@ async def call_gemini_async(prompt: str) -> dict:
 
 
 def parse_analysis(data: dict, cached: bool = False) -> AnalyzeResponse:
-    """Fast parsing with defaults."""
+    """Parse response into model."""
     categories = []
     for c in data.get("categories", []) or []:
         try:
@@ -222,7 +218,7 @@ def parse_analysis(data: dict, cached: bool = False) -> AnalyzeResponse:
         overall_risk=str(data.get("overall_risk", "medium")).lower(),
         overall_score=score,
         categories=categories,
-        bullets=list(data.get("bullets", []))[:5],  # cap bullets
+        bullets=list(data.get("bullets", []))[:5],
         recommendation=str(data.get("recommendation", "")),
         cached=cached,
     )
@@ -236,16 +232,16 @@ async def health():
     return {
         "status": "ok",
         "service": "trust-layer-backend",
-        "model": GEMINI_MODEL,
+        "model": OPENAI_MODEL,
         "cache_size": len(_analysis_cache),
-        "version": "0.5.0-fast",
+        "version": "0.6.0",
     }
 
 
 @app.post("/analyze-policy", response_model=AnalyzeResponse)
 @limiter.limit(RATE_LIMIT)
 async def analyze_policy(request: Request, req: AnalyzeRequest):
-    """Blazing fast policy analysis."""
+    """Analyze a privacy policy URL."""
     if not req.url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
@@ -255,15 +251,14 @@ async def analyze_policy(request: Request, req: AnalyzeRequest):
         return parse_analysis(cached_data, cached=True)
 
     try:
-        # Parallel: start thinking about structure while fetching
         html = await fetch_policy_html(req.url)
         text = extract_visible_text(html)
         
         if len(text) < 100:
             raise HTTPException(status_code=400, detail="Not enough policy text found")
 
-        prompt = build_fast_prompt(text)
-        data = await call_gemini_async(prompt)
+        prompt = build_prompt(text)
+        data = await call_openai_async(prompt)
         
         set_cached_analysis(req.url, data)
         return parse_analysis(data, cached=False)
