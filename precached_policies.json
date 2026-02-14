@@ -1,0 +1,1085 @@
+{
+    "_meta": {
+        "description": "Pre-analyzed privacy scores for top 20 websites. Loaded on server startup for instant responses.",
+        "last_updated": "2026-02-14",
+        "version": "1.0"
+    },
+    "domains": {
+        "google.com": {
+            "privacy_url": "https://policies.google.com/privacy",
+            "aliases": [
+                "google.co.in",
+                "google.co.uk",
+                "google.de",
+                "google.fr",
+                "google.co.jp"
+            ],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 3.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data across Google services and with partners for ads, analytics, and business purposes"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Extensive tracking across services using cookies, device identifiers, and activity logs"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Uses data to train and improve AI models including Gemini and other machine learning systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Retains data for varying periods; some data can be auto-deleted via user settings"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Industry-leading encryption and security infrastructure with regular audits"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Provides Google Dashboard and Takeout for data access/export, but opt-out options are complex"
+                    }
+                ],
+                "bullets": [
+                    "Collects vast amounts of data across all Google services including Search, YouTube, Gmail, and Maps",
+                    "Combines data from multiple services to build detailed advertising profiles",
+                    "Data is used to train AI and machine learning models"
+                ],
+                "recommendation": "Use privacy settings at myaccount.google.com to limit data collection, enable auto-delete, and review ad personalization controls."
+            }
+        },
+        "youtube.com": {
+            "privacy_url": "https://policies.google.com/privacy",
+            "aliases": [
+                "youtu.be"
+            ],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 3.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares viewing data across Google ecosystem and with advertisers for targeted ads"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Tracks watch history, search queries, comments, and interactions to build interest profiles"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Uses viewing patterns and interactions to train recommendation algorithms and AI models"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Watch and search history retained indefinitely unless manually cleared or auto-delete is enabled"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Secured by Google's infrastructure with strong encryption and access controls"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Users can pause watch/search history, but full data control requires navigating multiple settings"
+                    }
+                ],
+                "bullets": [
+                    "Tracks everything you watch to build detailed interest profiles for ad targeting",
+                    "Data is shared across the entire Google ecosystem",
+                    "Viewing patterns feed recommendation AI and are used for model training"
+                ],
+                "recommendation": "Pause watch and search history in YouTube settings, and use Google's auto-delete controls to limit data retention."
+            }
+        },
+        "facebook.com": {
+            "privacy_url": "https://www.facebook.com/privacy/policy",
+            "aliases": [
+                "fb.com",
+                "messenger.com"
+            ],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 2.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data extensively with Meta companies, advertisers, and third-party partners"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Tracks activity on and off Facebook via Meta Pixel, cookies, and partner data"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Uses posts, photos, and interactions to train Meta AI and generative AI models"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "high",
+                        "note": "Retains data for extended periods even after account deletion; some data kept indefinitely"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "medium",
+                        "note": "Has security measures but history of major data breaches raises concerns"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Provides data download and privacy checkup tools but opt-out processes are complex"
+                    }
+                ],
+                "bullets": [
+                    "Tracks your activity across millions of websites and apps through Meta Pixel and SDKs",
+                    "Your posts, photos, and interactions are used to train AI models",
+                    "History of significant data breaches affecting billions of users"
+                ],
+                "recommendation": "Review privacy shortcuts, limit off-Facebook activity tracking, and regularly audit connected apps and ad preferences."
+            }
+        },
+        "instagram.com": {
+            "privacy_url": "https://privacycenter.instagram.com/policy",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 2.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data across Meta platforms and with advertising partners extensively"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Tracks in-app behavior, DMs metadata, location, and cross-app activity via Meta technologies"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Photos, reels, and interactions used to train Meta AI and content recommendation systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "high",
+                        "note": "Content and metadata retained for extended periods; deleted content may persist in backups"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "medium",
+                        "note": "Encryption for some features but DMs are not end-to-end encrypted by default"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Data download available but opting out of AI training requires specific requests"
+                    }
+                ],
+                "bullets": [
+                    "All photos, stories, and reels can be used to train Meta's AI models",
+                    "Extensive cross-platform tracking shared with Facebook and WhatsApp",
+                    "Direct messages are not end-to-end encrypted by default"
+                ],
+                "recommendation": "Set your account to private, limit data sharing in privacy settings, and submit an AI training opt-out request through Meta's privacy center."
+            }
+        },
+        "x.com": {
+            "privacy_url": "https://x.com/en/privacy",
+            "aliases": [
+                "twitter.com",
+                "t.co"
+            ],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 3.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data with advertisers, business partners, and xAI for AI training purposes"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Tracks interactions, browsing behavior, and uses third-party data for ad targeting"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Posts and interactions are shared with xAI to train Grok and other AI models by default"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Data retained while account is active; deactivated account data kept for 30 days"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "medium",
+                        "note": "Basic security measures in place but reduced trust & safety team raises concerns"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Users can download data and adjust privacy settings but AI training opt-out is buried in settings"
+                    }
+                ],
+                "bullets": [
+                    "Your posts are shared with xAI to train the Grok AI model by default",
+                    "Extensive data sharing with advertisers and third-party partners",
+                    "Reduced trust and safety team has raised security concerns"
+                ],
+                "recommendation": "Disable Grok data sharing in Settings > Privacy, review connected apps, and limit ad personalization."
+            }
+        },
+        "apple.com": {
+            "privacy_url": "https://www.apple.com/legal/privacy/en-ww/",
+            "aliases": [
+                "icloud.com"
+            ],
+            "analysis": {
+                "overall_risk": "low",
+                "overall_score": 8.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "low",
+                        "note": "Minimal data sharing with third parties; does not sell user data to advertisers"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "low",
+                        "note": "Limited tracking with App Tracking Transparency framework giving users control"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "low",
+                        "note": "On-device processing for most AI features; Apple Intelligence uses differential privacy"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "low",
+                        "note": "Clear retention policies with data minimization as a core principle"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "End-to-end encryption for iCloud, iMessage, and FaceTime; strong hardware security"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "low",
+                        "note": "Comprehensive privacy dashboard at privacy.apple.com with data download and deletion"
+                    }
+                ],
+                "bullets": [
+                    "Industry-leading privacy with on-device AI processing and end-to-end encryption",
+                    "Does not sell user data or build advertising profiles",
+                    "App Tracking Transparency gives users control over cross-app tracking"
+                ],
+                "recommendation": "Apple is one of the most privacy-respecting major tech companies; enable Advanced Data Protection for iCloud for maximum security."
+            }
+        },
+        "amazon.com": {
+            "privacy_url": "https://www.amazon.com/gp/help/customer/display.html?nodeId=468496",
+            "aliases": [
+                "amazon.co.uk",
+                "amazon.in",
+                "amazon.de",
+                "aws.amazon.com",
+                "primevideo.com"
+            ],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 3.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data with subsidiaries, sellers, advertisers, and service providers extensively"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Tracks purchase history, browsing behavior, Alexa interactions, and device usage patterns"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Uses data to train Alexa AI, recommendation engines, and various ML systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "high",
+                        "note": "Retains purchase and browsing data indefinitely; Alexa recordings stored until manually deleted"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Strong security infrastructure backed by AWS with encryption and access controls"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Data download available via Request My Data tool but deletion process is limited"
+                    }
+                ],
+                "bullets": [
+                    "Collects data from shopping, Alexa, Ring, Kindle, and all Amazon services",
+                    "Alexa voice recordings are stored and used for AI training by default",
+                    "Purchase and browsing history retained indefinitely"
+                ],
+                "recommendation": "Review Alexa privacy settings, delete voice recordings regularly, and manage ad preferences in your Amazon account."
+            }
+        },
+        "microsoft.com": {
+            "privacy_url": "https://privacy.microsoft.com/en-us/privacystatement",
+            "aliases": [
+                "outlook.com",
+                "live.com",
+                "bing.com",
+                "office.com",
+                "xbox.com"
+            ],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with affiliates and partners; enterprise data handled separately with stronger controls"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks usage across Microsoft services and uses advertising IDs for personalization"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses data for Copilot and AI features but enterprise customers can opt out"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Varies by service; provides privacy dashboard to view and clear activity data"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Enterprise-grade security with BitLocker, Windows Hello, and strong encryption standards"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "low",
+                        "note": "Comprehensive privacy dashboard at account.microsoft.com with granular controls"
+                    }
+                ],
+                "bullets": [
+                    "Collects diagnostic data from Windows, Office, and other services by default",
+                    "Copilot AI features process user content but enterprise can opt out",
+                    "Provides one of the better privacy dashboards among major tech companies"
+                ],
+                "recommendation": "Use the Microsoft Privacy Dashboard to manage data, set diagnostic data to minimum in Windows Settings, and review Copilot data usage."
+            }
+        },
+        "linkedin.com": {
+            "privacy_url": "https://www.linkedin.com/legal/privacy-policy",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 4.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data with Microsoft affiliates, recruiters, enterprise subscribers, and ad partners"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Tracks professional activity, connections, messages, and off-LinkedIn browsing via widgets"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses profile and activity data for AI features like job recommendations and content suggestions"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Profile data retained while account is active; some data persists after account closure"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Microsoft-backed security infrastructure with encryption and multi-factor authentication"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Data download available; privacy settings allow limiting visibility but ad opt-out is limited"
+                    }
+                ],
+                "bullets": [
+                    "Your professional data is shared with recruiters and enterprise subscribers",
+                    "Tracks your browsing on sites with LinkedIn widgets embedded",
+                    "Part of Microsoft ecosystem with data shared across affiliates"
+                ],
+                "recommendation": "Review visibility settings, limit off-LinkedIn data collection in ad preferences, and audit third-party app connections."
+            }
+        },
+        "reddit.com": {
+            "privacy_url": "https://www.reddit.com/policies/privacy-policy",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with advertisers and has licensed content to AI companies for training"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks browsing, votes, and interactions; uses cookies and third-party analytics"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Has licensed user content to Google and others for AI model training"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Posts and comments persist publicly; deleted content may remain in archives"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "medium",
+                        "note": "Standard security practices with 2FA available but past breach incidents"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Users can delete accounts and request data but public posts may persist in third-party archives"
+                    }
+                ],
+                "bullets": [
+                    "User content has been licensed to AI companies like Google for model training",
+                    "Posts and comments are public by default and may persist in web archives",
+                    "Growing advertising platform with increasing data collection"
+                ],
+                "recommendation": "Use a pseudonymous account, be mindful that posts are public and may be used for AI training, and review ad personalization settings."
+            }
+        },
+        "tiktok.com": {
+            "privacy_url": "https://www.tiktok.com/legal/privacy-policy-us",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "high",
+                "overall_score": 2.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares data with ByteDance affiliates and business partners; data access concerns from governments"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Collects device info, location, keystroke patterns, browsing history, and biometric data"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Uses all content and interactions to train highly sophisticated recommendation algorithms"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "high",
+                        "note": "Unclear retention policies with data potentially stored in multiple jurisdictions"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "high",
+                        "note": "Ongoing concerns about data access by Chinese government; Project Texas attempts to address"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "high",
+                        "note": "Limited transparency and control options; data deletion requests may not cover all copies"
+                    }
+                ],
+                "bullets": [
+                    "Collects extensive biometric data including faceprints and voiceprints",
+                    "Ongoing national security concerns about data access by Chinese government",
+                    "Keystroke patterns and clipboard contents have been collected"
+                ],
+                "recommendation": "Limit permissions (camera, microphone, location), set account to private, and be aware that data may be accessible to ByteDance affiliates globally."
+            }
+        },
+        "netflix.com": {
+            "privacy_url": "https://help.netflix.com/legal/privacy",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 6.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with service providers and for limited advertising on the ad-supported tier"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks viewing history, search queries, and device interactions for recommendations"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses viewing data to train recommendation algorithms and content matching systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Retains viewing history for the duration of account; provides profile-level viewing history management"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Strong security practices with encryption and regular security assessments"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "low",
+                        "note": "Clear data access and deletion options through account settings"
+                    }
+                ],
+                "bullets": [
+                    "Detailed viewing behavior tracked for recommendation engine training",
+                    "Ad-supported tier introduces additional data sharing with advertisers",
+                    "Relatively transparent privacy practices compared to social media platforms"
+                ],
+                "recommendation": "Review viewing activity settings, consider the privacy trade-offs of the ad-supported tier, and use profile-level controls to manage data."
+            }
+        },
+        "spotify.com": {
+            "privacy_url": "https://www.spotify.com/us/legal/privacy-policy/",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with advertising partners, podcast hosts, and third-party services"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks listening habits, playlists, and interactions to build taste profiles"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses listening data to train DJ AI, recommendation algorithms, and personalization models"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Listening history retained while account is active; data deletion available on request"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Standard encryption and security practices with OAuth for connected apps"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Privacy settings available but limited; data download through account settings"
+                    }
+                ],
+                "bullets": [
+                    "Detailed listening habits used to build taste profiles shared with advertisers",
+                    "Podcast listening data may be shared with podcast creators and hosts",
+                    "AI DJ and recommendation features rely heavily on behavioral data"
+                ],
+                "recommendation": "Review connected apps, manage social sharing settings, and consider that listening data shapes your advertising profile."
+            }
+        },
+        "whatsapp.com": {
+            "privacy_url": "https://www.whatsapp.com/legal/privacy-policy",
+            "aliases": [
+                "wa.me"
+            ],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "high",
+                        "note": "Shares metadata with Meta/Facebook for advertising despite end-to-end encryption of messages"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Collects metadata including who you talk to, when, and how often; shares with Meta"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Message content is encrypted but metadata and usage patterns may inform Meta AI systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Messages stored on device; metadata retained on servers for operational purposes"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "End-to-end encryption for messages and calls by default; backup encryption optional"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Account deletion available but metadata already shared with Meta cannot be recalled"
+                    }
+                ],
+                "bullets": [
+                    "Messages are end-to-end encrypted but metadata is shared with Meta for ads",
+                    "Contact lists, usage patterns, and group membership shared with Facebook",
+                    "Cloud backups are not end-to-end encrypted unless explicitly enabled"
+                ],
+                "recommendation": "Enable encrypted backups, be aware that metadata is shared with Meta despite message encryption, and review privacy settings regularly."
+            }
+        },
+        "snapchat.com": {
+            "privacy_url": "https://values.snap.com/privacy/privacy-policy",
+            "aliases": [
+                "snap.com"
+            ],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 4.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with advertisers and business partners for targeted advertising"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "high",
+                        "note": "Collects precise location data, device info, and content interaction patterns"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Snaps and interactions used to train My AI chatbot and AR lens recognition systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Snaps deleted from servers after viewing but metadata and Memories are retained longer"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "medium",
+                        "note": "Messages auto-delete but not end-to-end encrypted; Snap Map raises location privacy concerns"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Account deletion available; data download through account settings"
+                    }
+                ],
+                "bullets": [
+                    "Precise location data collected for Snap Map and advertising purposes",
+                    "My AI chatbot conversations are used to train Snap's AI models",
+                    "Snaps auto-delete but metadata is retained on servers"
+                ],
+                "recommendation": "Disable Snap Map or set to Ghost Mode, review My AI data usage settings, and limit location permissions."
+            }
+        },
+        "pinterest.com": {
+            "privacy_url": "https://policy.pinterest.com/en/privacy-policy",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.5,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with advertisers and partners for targeted advertising on the platform"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks pins, searches, and browsing to build interest profiles for ad targeting"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses interaction data to train visual search, recommendation, and shopping AI features"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Pins and boards retained while account is active; account deletion removes public content"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Standard security practices with HTTPS and access controls"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "low",
+                        "note": "Clear privacy settings, data download, and account deletion options available"
+                    }
+                ],
+                "bullets": [
+                    "Interest-based profiles built from your pins and searches for ad targeting",
+                    "Visual recognition AI trained on user-pinned content",
+                    "Relatively straightforward privacy controls compared to other social platforms"
+                ],
+                "recommendation": "Review personalization and data settings in privacy preferences, and be aware that saved content informs your advertising profile."
+            }
+        },
+        "discord.com": {
+            "privacy_url": "https://discord.com/privacy",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with service providers and for safety; increasing focus on advertising"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks messages, voice channel usage, and server activity; new ad targeting being introduced"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses data for AI features like Clyde chatbot and auto-moderation; opt-out available"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Messages retained until deleted; server data persists as long as server exists"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "medium",
+                        "note": "Messages are not end-to-end encrypted; standard transport encryption only"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Data request and deletion available; privacy settings for AI features but increasingly complex"
+                    }
+                ],
+                "bullets": [
+                    "Messages are not end-to-end encrypted and can be read by Discord",
+                    "Introducing advertising features that will increase data collection",
+                    "AI features like Clyde use conversation data unless users opt out"
+                ],
+                "recommendation": "Opt out of AI data usage in settings, be mindful that messages are not encrypted, and review the new advertising data settings."
+            }
+        },
+        "twitch.tv": {
+            "privacy_url": "https://www.twitch.tv/p/legal/privacy-notice/",
+            "aliases": [],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 5.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with Amazon affiliates, advertisers, and content creators for analytics"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks viewing habits, chat activity, and interactions across the platform"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "medium",
+                        "note": "Uses data for content recommendations and moderation AI systems"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Chat logs and viewing data retained; VODs have configurable retention periods"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Amazon-backed infrastructure with strong security practices"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Account settings provide some control; data download available through Twitch settings"
+                    }
+                ],
+                "bullets": [
+                    "Part of Amazon ecosystem with data shared across Amazon affiliates",
+                    "Chat messages and viewing habits tracked for recommendations and analytics",
+                    "Streamers receive analytics data about their viewers' behavior"
+                ],
+                "recommendation": "Review connected accounts, manage notification and chat settings, and be aware that viewing data feeds into Amazon's broader ecosystem."
+            }
+        },
+        "brave.com": {
+            "privacy_url": "https://brave.com/privacy/browser/",
+            "aliases": [
+                "search.brave.com"
+            ],
+            "analysis": {
+                "overall_risk": "low",
+                "overall_score": 9.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "low",
+                        "note": "Does not share personal browsing data; Brave Ads use anonymous confirmation tokens"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "low",
+                        "note": "Built-in ad and tracker blocking; no user tracking for advertising purposes"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "low",
+                        "note": "Leo AI processes queries locally or ephemerally; does not use browsing data for AI training"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "low",
+                        "note": "Browsing data stays on device; Brave Search queries are not linked to users"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Strong security with HTTPS-by-default, built-in Tor mode, and fingerprinting protection"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "low",
+                        "note": "Privacy-first design with granular controls and transparent open-source codebase"
+                    }
+                ],
+                "bullets": [
+                    "Privacy-first browser with built-in ad blocking and tracker protection",
+                    "Brave Ads use anonymous tokens — no personal data leaves the browser",
+                    "Open-source codebase allows independent verification of privacy claims"
+                ],
+                "recommendation": "Brave is one of the most privacy-respecting browsers available; enable Brave Shields for maximum protection and consider Brave Search for private searching."
+            }
+        },
+        "github.com": {
+            "privacy_url": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+            "aliases": [
+                "gist.github.com"
+            ],
+            "analysis": {
+                "overall_risk": "medium",
+                "overall_score": 6.0,
+                "categories": [
+                    {
+                        "id": "data_sharing",
+                        "label": "Data sharing",
+                        "level": "medium",
+                        "note": "Shares data with Microsoft affiliates and service providers; public repos are inherently open"
+                    },
+                    {
+                        "id": "tracking",
+                        "label": "Tracking",
+                        "level": "medium",
+                        "note": "Tracks repository activity, contributions, and usage patterns for platform features"
+                    },
+                    {
+                        "id": "ai_training",
+                        "label": "AI training",
+                        "level": "high",
+                        "note": "Public repository code used to train GitHub Copilot and other AI coding assistants"
+                    },
+                    {
+                        "id": "retention",
+                        "label": "Data retention",
+                        "level": "medium",
+                        "note": "Code and contributions retained in git history; account deletion removes profile but forks may persist"
+                    },
+                    {
+                        "id": "security",
+                        "label": "Security",
+                        "level": "low",
+                        "note": "Strong security with 2FA, SSH keys, CodeQL scanning, and Dependabot alerts"
+                    },
+                    {
+                        "id": "rights_control",
+                        "label": "User rights",
+                        "level": "medium",
+                        "note": "Granular repository visibility settings; Copilot opt-out available for individual and organization accounts"
+                    }
+                ],
+                "bullets": [
+                    "Public code repositories are used to train GitHub Copilot AI",
+                    "Part of Microsoft ecosystem with data sharing across affiliates",
+                    "Strong security features but limited control over how public code is used"
+                ],
+                "recommendation": "Set repositories to private when appropriate, opt out of Copilot training in settings, and enable 2FA for account security."
+            }
+        }
+    }
+}

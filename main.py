@@ -3,7 +3,10 @@ import hashlib
 import json
 import logging
 import os
+import pathlib
+from contextlib import asynccontextmanager
 from datetime import datetime
+from urllib.parse import urlparse
 
 import httpx
 from bs4 import BeautifulSoup
@@ -48,9 +51,38 @@ _analysis_cache: dict[str, tuple[datetime, dict]] = {}
 CACHE_MAX_SIZE = 200
 CACHE_TTL_HOURS = 48
 
+# Pre-cached domain lookup: domain -> analysis data
+_precached_domains: dict[str, dict] = {}
+_precached_meta: dict[str, dict] = {}  # domain -> {privacy_url, score, risk}
+
 
 def get_cache_key(url: str) -> str:
     return hashlib.sha256(url.lower().strip().encode()).hexdigest()[:16]
+
+
+def extract_domain(url: str) -> str:
+    """Extract root domain from any URL (e.g., mail.google.com -> google.com)."""
+    try:
+        parsed = urlparse(url if "://" in url else f"https://{url}")
+        hostname = parsed.hostname or ""
+        parts = hostname.lower().split(".")
+        # Handle common TLDs like .co.uk, .co.in, .co.jp
+        if len(parts) >= 3 and parts[-2] in ("co", "com", "org", "net", "edu", "gov"):
+            return ".".join(parts[-3:])
+        if len(parts) >= 2:
+            return ".".join(parts[-2:])
+        return hostname
+    except Exception:
+        return ""
+
+
+def get_precached_analysis(url: str) -> dict | None:
+    """Check if the URL's domain matches a pre-cached entry."""
+    domain = extract_domain(url)
+    if domain in _precached_domains:
+        logger.info(f"⚡ Pre-cache HIT for domain: {domain}")
+        return _precached_domains[domain]
+    return None
 
 
 def get_cached_analysis(url: str) -> dict | None:
@@ -72,12 +104,66 @@ def set_cached_analysis(url: str, data: dict) -> None:
     _analysis_cache[get_cache_key(url)] = (datetime.now(), data)
 
 
+def load_precached_policies() -> int:
+    """Load pre-cached privacy analysis from JSON file."""
+    json_path = pathlib.Path(__file__).parent / "precached_policies.json"
+    if not json_path.exists():
+        logger.warning("⚠ precached_policies.json not found")
+        return 0
+
+    try:
+        data = json.loads(json_path.read_text(encoding="utf-8"))
+        domains = data.get("domains", {})
+        count = 0
+
+        for domain, entry in domains.items():
+            analysis = entry.get("analysis", {})
+            privacy_url = entry.get("privacy_url", "")
+
+            # Store under primary domain
+            _precached_domains[domain] = analysis
+            _precached_meta[domain] = {
+                "domain": domain,
+                "privacy_url": privacy_url,
+                "overall_score": analysis.get("overall_score", 0),
+                "overall_risk": analysis.get("overall_risk", "unknown"),
+            }
+            count += 1
+
+            # Store under alias domains
+            for alias in entry.get("aliases", []):
+                _precached_domains[alias] = analysis
+                _precached_meta[alias] = {
+                    "domain": alias,
+                    "privacy_url": privacy_url,
+                    "overall_score": analysis.get("overall_score", 0),
+                    "overall_risk": analysis.get("overall_risk", "unknown"),
+                    "alias_of": domain,
+                }
+
+        logger.info(f"✅ Loaded {count} pre-cached privacy policies ({len(_precached_domains)} domains total)")
+        return count
+    except Exception as e:
+        logger.error(f"❌ Failed to load precached policies: {e}")
+        return 0
+
+
 # --------- APP ---------
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    """Load pre-cached policies on startup."""
+    count = load_precached_policies()
+    logger.info(f"🚀 Server ready with {count} pre-cached sites")
+    yield
+
 
 app = FastAPI(
     title="Trust Layer Backend",
     description="Privacy policy analyzer - OpenAI Edition",
-    version="0.6.0",
+    version="0.7.0",
+    lifespan=lifespan,
 )
 
 app.state.limiter = limiter
@@ -113,6 +199,7 @@ class AnalyzeResponse(BaseModel):
     bullets: list[str]
     recommendation: str
     cached: bool = False
+    precached: bool = False
 
 
 # --------- HELPERS ---------
@@ -195,7 +282,7 @@ async def call_openai_async(prompt: str) -> dict:
         raise
 
 
-def parse_analysis(data: dict, cached: bool = False) -> AnalyzeResponse:
+def parse_analysis(data: dict, cached: bool = False, precached: bool = False) -> AnalyzeResponse:
     """Parse response into model."""
     categories = []
     for c in data.get("categories", []) or []:
@@ -221,6 +308,7 @@ def parse_analysis(data: dict, cached: bool = False) -> AnalyzeResponse:
         bullets=list(data.get("bullets", []))[:5],
         recommendation=str(data.get("recommendation", "")),
         cached=cached,
+        precached=precached,
     )
 
 
@@ -234,7 +322,8 @@ async def health():
         "service": "trust-layer-backend",
         "model": OPENAI_MODEL,
         "cache_size": len(_analysis_cache),
-        "version": "0.6.0",
+        "precached_domains": len(_precached_domains),
+        "version": "0.7.0",
     }
 
 
@@ -245,11 +334,17 @@ async def analyze_policy(request: Request, req: AnalyzeRequest):
     if not req.url.startswith("http"):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
-    # Cache hit = instant response
+    # 1. Pre-cached domain check = instant, survives cold starts
+    precached_data = get_precached_analysis(req.url)
+    if precached_data:
+        return parse_analysis(precached_data, cached=True, precached=True)
+
+    # 2. Runtime cache check = instant for repeat requests
     cached_data = get_cached_analysis(req.url)
     if cached_data:
         return parse_analysis(cached_data, cached=True)
 
+    # 3. Live analysis via OpenAI
     try:
         html = await fetch_policy_html(req.url)
         text = extract_visible_text(html)
@@ -272,9 +367,37 @@ async def analyze_policy(request: Request, req: AnalyzeRequest):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
+@app.get("/precached")
+async def precached_sites():
+    """List all pre-cached domains and their scores."""
+    # Deduplicate: only show primary domains (skip aliases)
+    sites = []
+    seen = set()
+    for domain, meta in _precached_meta.items():
+        primary = meta.get("alias_of", domain)
+        if primary not in seen:
+            seen.add(primary)
+            primary_meta = _precached_meta.get(primary, meta)
+            sites.append({
+                "domain": primary,
+                "privacy_url": primary_meta.get("privacy_url", ""),
+                "overall_score": primary_meta.get("overall_score", 0),
+                "overall_risk": primary_meta.get("overall_risk", "unknown"),
+            })
+    return {
+        "count": len(sites),
+        "sites": sorted(sites, key=lambda s: s["domain"]),
+    }
+
+
 @app.get("/cache/stats")
 async def cache_stats():
-    return {"size": len(_analysis_cache), "max": CACHE_MAX_SIZE, "ttl_hours": CACHE_TTL_HOURS}
+    return {
+        "runtime_cache_size": len(_analysis_cache),
+        "precached_domains": len(_precached_domains),
+        "max": CACHE_MAX_SIZE,
+        "ttl_hours": CACHE_TTL_HOURS,
+    }
 
 
 @app.delete("/cache/clear")
@@ -282,4 +405,4 @@ async def clear_cache():
     global _analysis_cache
     count = len(_analysis_cache)
     _analysis_cache = {}
-    return {"cleared": count}
+    return {"cleared": count, "note": "Pre-cached entries are not affected"}
