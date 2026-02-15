@@ -205,17 +205,39 @@ class AnalyzeResponse(BaseModel):
 # --------- HELPERS ---------
 
 
+# Realistic browser User-Agent to avoid being blocked by sites
+_BROWSER_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/131.0.0.0 Safari/537.36"
+)
+
+_FETCH_HEADERS = {
+    "User-Agent": _BROWSER_UA,
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
+
 async def fetch_policy_html(url: str) -> str:
-    """Fetch HTML with reliable timeout."""
+    """Fetch HTML with realistic browser headers and retry."""
     async with httpx.AsyncClient(
-        timeout=httpx.Timeout(15.0, connect=5.0),
+        timeout=httpx.Timeout(25.0, connect=8.0),
         follow_redirects=True,
-        headers={"User-Agent": "TrustLayer/0.6"},
+        headers=_FETCH_HEADERS,
         http2=True,
     ) as http_client:
-        resp = await http_client.get(url)
-        resp.raise_for_status()
-        return resp.text
+        try:
+            resp = await http_client.get(url)
+            resp.raise_for_status()
+            return resp.text
+        except (httpx.HTTPStatusError, httpx.ConnectError) as first_err:
+            # Retry once with slightly different headers
+            logger.warning(f"First fetch failed ({first_err}), retrying...")
+            retry_headers = {**_FETCH_HEADERS, "Accept": "text/html,*/*;q=0.8"}
+            resp = await http_client.get(url, headers=retry_headers)
+            resp.raise_for_status()
+            return resp.text
 
 
 def extract_visible_text(html: str) -> str:
@@ -346,25 +368,55 @@ async def analyze_policy(request: Request, req: AnalyzeRequest):
 
     # 3. Live analysis via OpenAI
     try:
+        logger.info(f"🔍 Live analysis for: {req.url}")
         html = await fetch_policy_html(req.url)
         text = extract_visible_text(html)
         
         if len(text) < 100:
-            raise HTTPException(status_code=400, detail="Not enough policy text found")
+            raise HTTPException(
+                status_code=400,
+                detail="Not enough policy text found on this page. Make sure the URL points to a privacy policy.",
+            )
 
         prompt = build_prompt(text)
         data = await call_openai_async(prompt)
         
         set_cached_analysis(req.url, data)
+        logger.info(f"✅ Live analysis complete for: {req.url}")
         return parse_analysis(data, cached=False)
 
+    except HTTPException:
+        raise  # re-raise our own HTTPExceptions
+    except httpx.HTTPStatusError as e:
+        logger.error(f"HTTP {e.response.status_code} fetching {req.url}: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"The website returned HTTP {e.response.status_code}. It may be blocking automated access.",
+        ) from e
+    except httpx.TimeoutException as e:
+        logger.error(f"Timeout fetching {req.url}: {e}")
+        raise HTTPException(
+            status_code=504,
+            detail="The privacy policy page took too long to respond. Please try again.",
+        ) from e
     except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"Fetch failed: {e}") from e
+        logger.error(f"Network error fetching {req.url}: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not reach the privacy policy page: {type(e).__name__}",
+        ) from e
     except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"Invalid JSON from AI: {e}") from e
+        logger.error(f"Invalid JSON from OpenAI for {req.url}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="AI returned an invalid response. Please try again.",
+        ) from e
     except Exception as e:
-        logger.error(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(f"Unexpected error for {req.url}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Analysis error: {type(e).__name__}: {e}",
+        ) from e
 
 
 @app.get("/precached")
