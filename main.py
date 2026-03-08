@@ -32,14 +32,15 @@ logger = logging.getLogger("trust-layer")
 
 load_dotenv()
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")  # fast & cheap
+LLM_API_KEY = os.getenv("LLM_API_KEY") or os.getenv("GROQ_API_KEY") or os.getenv("XAI_API_KEY") or os.getenv("OPENAI_API_KEY")
+LLM_MODEL = os.getenv("LLM_MODEL") or os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+LLM_BASE_URL = os.getenv("LLM_BASE_URL") or os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 RATE_LIMIT = os.getenv("RATE_LIMIT", "30/minute")
 
-if not OPENAI_API_KEY:
-    raise RuntimeError("OPENAI_API_KEY is not set in environment or .env")
+if not LLM_API_KEY:
+    raise RuntimeError("LLM_API_KEY (or GROQ_API_KEY/OPENAI_API_KEY) is not set in environment or .env")
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
 
 # --------- RATE LIMITER ---------
 
@@ -161,8 +162,8 @@ async def lifespan(application: FastAPI):
 
 app = FastAPI(
     title="Trust Layer Backend",
-    description="Privacy policy analyzer - OpenAI Edition",
-    version="0.7.0",
+    description="Privacy policy analyzer - Groq Edition",
+    version="0.9.0",
     lifespan=lifespan,
 )
 
@@ -281,7 +282,7 @@ async def call_openai_async(prompt: str) -> dict:
     
     def sync_call():
         response = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
             temperature=0,
             max_tokens=1000,
@@ -342,10 +343,11 @@ async def health():
     return {
         "status": "ok",
         "service": "trust-layer-backend",
-        "model": OPENAI_MODEL,
+        "model": LLM_MODEL,
+        "provider": "groq",
         "cache_size": len(_analysis_cache),
         "precached_domains": len(_precached_domains),
-        "version": "0.7.0",
+        "version": "0.9.0",
     }
 
 
